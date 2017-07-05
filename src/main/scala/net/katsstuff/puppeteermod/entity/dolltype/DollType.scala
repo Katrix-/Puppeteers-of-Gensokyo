@@ -10,29 +10,29 @@ import net.minecraftforge.fml.relauncher.{Side, SideOnly}
 
 abstract class DollType extends IForgeRegistryEntry.Impl[DollType] {
 
-	def name: String
+  def name: String
 
-	def health: Double
-	def speed: Double
+  def health: Double
+  def speed:  Double
 
-	def width: Float
-	def height: Float
+  def width:  Float
+  def height: Float
 
-	def inventorySize: Int
+  def inventorySize: Int
 
-	def texture: ResourceLocation
-	def textureArmorFolder: ResourceLocation
+  def texture:            ResourceLocation
+  def textureArmorFolder: ResourceLocation
 
-	@SideOnly(Side.CLIENT)
-	def model: ModelBiped
-	@SideOnly(Side.CLIENT)
-	def modelArmor: ModelBiped
-	@SideOnly(Side.CLIENT)
-	def modelLeggings: ModelBiped
+  @SideOnly(Side.CLIENT)
+  def model: ModelBiped
+  @SideOnly(Side.CLIENT)
+  def modelArmor: ModelBiped
+  @SideOnly(Side.CLIENT)
+  def modelLeggings: ModelBiped
 
-	def initializeAI(entityDoll: EntityDoll): Unit
-	def recipe: IRecipe
+  def initializeAI(entityDoll: EntityDoll): Unit
+  def recipe:                               IRecipe
 
-	def heldItem: ItemStack
+  def heldItem: ItemStack
 
 }

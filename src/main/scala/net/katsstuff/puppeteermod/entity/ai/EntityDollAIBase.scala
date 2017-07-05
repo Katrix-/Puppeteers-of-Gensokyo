@@ -6,9 +6,9 @@ import net.minecraft.util.text.TextComponentString
 
 class EntityDollAIBase(doll: EntityDoll) extends EntityAIBase {
 
-	def shouldExecute: Boolean = false
-	override def startExecuting(): Unit = doll.chatMessage(new TextComponentString(s"$getAIName.start"))
-	override def resetTask(): Unit = doll.chatMessage(new TextComponentString(s"$getAIName.reset"))
+  def shouldExecute:             Boolean = false
+  override def startExecuting(): Unit    = doll.chatMessage(new TextComponentString(s"$getAIName.start"))
+  override def resetTask():      Unit    = doll.chatMessage(new TextComponentString(s"$getAIName.reset"))
 
-	def getAIName: String = this.getClass.getSimpleName
+  def getAIName: String = this.getClass.getSimpleName
 }

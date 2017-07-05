@@ -5,6 +5,6 @@ import net.katsstuff.puppeteermod.PuppeteerMod
 
 //TODO
 class ItemDollCore extends ItemModBase(LibItemName.DollCore) {
-	setCreativeTab(PuppeteerMod.CreativeTab)
+  setCreativeTab(PuppeteerMod.CreativeTab)
 
 }

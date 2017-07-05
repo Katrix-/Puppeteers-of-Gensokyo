@@ -10,14 +10,15 @@ import net.minecraftforge.fml.common.registry.{FMLControlledNamespacedRegistry, 
 @EventBusSubscriber
 object DollRegistry {
 
-	var registry: FMLControlledNamespacedRegistry[DollType] = _
+  var registry: FMLControlledNamespacedRegistry[DollType] = _
 
-	@SubscribeEvent
-	def registerRegisters(event: RegistryEvent.NewRegistry): Unit = {
-		registry = new RegistryBuilder[DollType]
-			.setIDRange(0, Short.MaxValue)
-			.setName(new ResourceLocation(LibMod.Id, "doll"))
-			.setType(classOf[DollType])
-			.create().asInstanceOf[FMLControlledNamespacedRegistry[DollType]]
-	}
+  @SubscribeEvent
+  def registerRegisters(event: RegistryEvent.NewRegistry): Unit = {
+    registry = new RegistryBuilder[DollType]
+      .setIDRange(0, Short.MaxValue)
+      .setName(new ResourceLocation(LibMod.Id, "doll"))
+      .setType(classOf[DollType])
+      .create()
+      .asInstanceOf[FMLControlledNamespacedRegistry[DollType]]
+  }
 }
