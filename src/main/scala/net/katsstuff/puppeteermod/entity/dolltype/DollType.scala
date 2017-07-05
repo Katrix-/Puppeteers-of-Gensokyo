@@ -8,7 +8,7 @@ import net.minecraft.util.ResourceLocation
 import net.minecraftforge.fml.common.registry.IForgeRegistryEntry
 import net.minecraftforge.fml.relauncher.{Side, SideOnly}
 
-abstract class DollType extends IForgeRegistryEntry.Impl[DollType] {
+trait DollType extends IForgeRegistryEntry.Impl[DollType] {
 
   def name: String
 

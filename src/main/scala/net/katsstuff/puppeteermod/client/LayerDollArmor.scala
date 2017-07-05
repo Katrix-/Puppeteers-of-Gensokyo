@@ -28,9 +28,8 @@ class LayerDollArmor(renderer: RendererDoll) extends LayerBipedArmor(renderer) {
             if (idx != -1) {
               texture = texture.substring(idx + 1)
             }
-            val resource =
-              s"${folder.getResourceDomain}:${folder.getResourcePath}/${texture}_layer_${if (slot == EntityEquipmentSlot.LEGS) 2 else 1}.png"
-            new ResourceLocation(resource)
+            val resource = s"${folder.getResourcePath}/${texture}_layer_${if (slot == EntityEquipmentSlot.LEGS) 2 else 1}.png"
+            new ResourceLocation(folder.getResourceDomain, resource)
           case _ => super.getArmorResource(entity, stack, slot, `type`)
         }
       case _ => super.getArmorResource(entity, stack, slot, `type`)

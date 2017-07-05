@@ -30,7 +30,7 @@ class EntityDollAIWatchClosest(doll: EntityDoll, watchTarget: Class[_ <: Entity]
     }
   }
 
-  override def continueExecuting: Boolean =
+  override def shouldContinueExecuting: Boolean =
     if (!closestEntity.isEntityAlive) false
     else if (doll.getDistanceSqToEntity(closestEntity) > (maxDistance * maxDistance)) false
     else lookTime > 0

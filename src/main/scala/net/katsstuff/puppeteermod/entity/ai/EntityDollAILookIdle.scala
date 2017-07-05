@@ -12,7 +12,7 @@ class EntityDollAILookIdle(doll: EntityDoll) extends EntityDollAIBase(doll) {
   private var idleTime = 0
 
   override def shouldExecute:     Boolean = doll.getRNG.nextFloat < 0.02F
-  override def continueExecuting: Boolean = idleTime >= 0
+  override def shouldContinueExecuting: Boolean = idleTime >= 0
 
   override def startExecuting(): Unit = {
     val d0 = (Math.PI * 2D) * doll.getRNG.nextDouble

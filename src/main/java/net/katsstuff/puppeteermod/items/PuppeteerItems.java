@@ -10,7 +10,7 @@ import net.minecraftforge.fml.common.registry.GameRegistry.ObjectHolder;
 public class PuppeteerItems {
 
 	@ObjectHolder(LibItemName.Doll)
-	public static final ItemDoll Doll = new ItemDoll();
+	public static final Item Doll = new Item();
 
 	@ObjectHolder(LibItemName.DollCore)
 	public static final Item DollCore = new Item();

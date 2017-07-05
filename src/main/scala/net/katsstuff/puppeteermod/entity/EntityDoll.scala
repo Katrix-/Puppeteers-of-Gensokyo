@@ -33,31 +33,28 @@ class EntityDoll(_world: World, pos: Vec3d, private var _dollType: DollType, pri
   var dollMode: DollMode = DollMode.Follow
 
   private val inventory = new ItemStackHandler(dollType.inventorySize)
-  private val allInventories = {
-    val hand  = getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, EnumFacing.UP).asInstanceOf[IItemHandlerModifiable]
-    val armor = getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, EnumFacing.NORTH).asInstanceOf[IItemHandlerModifiable]
-    new CombinedInvWrapper(hand, armor, inventory)
-  }
+  private val allInventories = new CombinedInvWrapper(
+    getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, EnumFacing.UP).asInstanceOf[IItemHandlerModifiable],
+    getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, EnumFacing.NORTH).asInstanceOf[IItemHandlerModifiable],
+    inventory
+  )
 
   setSize(dollType.width, dollType.height)
   setHeldItem(EnumHand.MAIN_HAND, dollType.heldItem)
-  setPosition(pos.xCoord, pos.yCoord, pos.zCoord)
+  setPosition(pos.x, pos.y, pos.z)
 
   def this(world: World) {
     this(world, Vec3d.ZERO, PuppeteerDolls.Bare, None)
   }
 
   override def writeSpawnData(buf: ByteBuf): Unit =
-    buf.writeInt(DollRegistry.registry.getId(_dollType))
+    buf.writeInt(DollRegistry.getId(_dollType))
 
   override def readSpawnData(buf: ByteBuf): Unit =
-    _dollType = DollRegistry.registry.getObjectById(buf.readInt())
+    _dollType = DollRegistry.dollFromId(buf.readInt()).getOrElse(PuppeteerDolls.Bare)
 
   override def initEntityAI(): Unit =
     dollType.initializeAI(this)
-
-  def addAI(index: Int, ai: EntityDollAIBase): Unit =
-    tasks.addTask(index, ai)
 
   override def applyEntityAttributes(): Unit = {
     super.applyEntityAttributes()
@@ -116,10 +113,10 @@ class EntityDoll(_world: World, pos: Vec3d, private var _dollType: DollType, pri
       val list = world.getEntitiesWithinAABB(classOf[EntityItem], this.getEntityBoundingBox.expand(1.0D, 0.0D, 1.0D)).asScala
 
       for (entityItem <- list if !entityItem.isDead) {
-        val itemstack = entityItem.getEntityItem
+        val itemstack = entityItem.getItem
         addStackToInventory(itemstack) match {
-          case remaining if !remaining.isEmpty && remaining != itemstack =>
-            entityItem.setEntityItemStack(remaining)
+          case remaining if !remaining.isEmpty && !remaining.isItemEqual(itemstack) =>
+            entityItem.setItem(remaining)
             playSound(SoundEvents.ENTITY_ITEM_PICKUP, 0.2F, ((rand.nextFloat - rand.nextFloat) * 0.7F + 1.0F) * 2.0F)
           case none if none.isEmpty =>
             playSound(SoundEvents.ENTITY_ITEM_PICKUP, 0.2F, ((rand.nextFloat - rand.nextFloat) * 0.7F + 1.0F) * 2.0F)
@@ -147,7 +144,7 @@ class EntityDoll(_world: World, pos: Vec3d, private var _dollType: DollType, pri
             true
           }
         } else {
-          val stack = player.getHeldItem(stack)
+          val stack = player.getHeldItem(hand)
           if (stack.isEmpty) {
             toggleMode()
             true
@@ -173,20 +170,16 @@ class EntityDoll(_world: World, pos: Vec3d, private var _dollType: DollType, pri
     } else true
   }
 
-  def chatMessage(msg: ITextComponent) {
-    ownerEntity.foreach(p => chatMessage(p, msg))
-  }
+  def chatMessage(msg: ITextComponent): Unit = ownerEntity.foreach(chatMessage(_, msg))
 
-  def chatMessage(player: EntityPlayer, msg: ITextComponent) {
-    player.sendMessage(new TextComponentString(s"$getName: ").appendSibling(msg))
-  }
+  def chatMessage(player: EntityPlayer, msg: ITextComponent): Unit = player.sendMessage(new TextComponentString(s"$getName: ").appendSibling(msg))
 
   def ownerEntity:             Option[EntityPlayer] = owner.flatMap(uuid => Option(world.getPlayerEntityByUUID(uuid)))
   def isOwner(entity: Entity): Boolean              = owner.contains(entity.getUniqueID)
 
   override def getName: String =
     if (this.hasCustomName) getCustomNameTag
-    else I18n.format(s"entity.dollsmod.doll.${dollType.name}.name")
+    else I18n.format(s"entity.puppeteermod.doll.${dollType.name}.name")
 
   override def getCapability[A](capability: Capability[A], facing: EnumFacing): A = {
     val itemCapability = CapabilityItemHandler.ITEM_HANDLER_CAPABILITY
@@ -213,6 +206,6 @@ class EntityDoll(_world: World, pos: Vec3d, private var _dollType: DollType, pri
 
   override def writeEntityToNBT(compound: NBTTagCompound): Unit = {
     super.writeEntityToNBT(compound)
-    owner.foreach(uuid => compound.setUniqueId("Owner", uuid))
+    owner.foreach(compound.setUniqueId("Owner", _))
   }
 }

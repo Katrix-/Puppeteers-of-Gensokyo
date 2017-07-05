@@ -21,7 +21,7 @@ class EntityDollAIWander(doll: EntityDoll, speed: Double, var executionChance: I
     if (doll.dollMode != DollMode.Patrol) false
     else {
       if (!mustUpdate) {
-        if (doll.getAge >= 100) return false
+        if (doll.ticksExisted >= 100) return false
         if (doll.getRNG.nextInt(executionChance) != 0) return false
       }
 
@@ -34,7 +34,7 @@ class EntityDollAIWander(doll: EntityDoll, speed: Double, var executionChance: I
     }
   }
 
-  override def continueExecuting: Boolean = !doll.getNavigator.noPath && doll.dollMode == DollMode.Patrol
+  override def shouldContinueExecuting: Boolean = !doll.getNavigator.noPath && doll.dollMode == DollMode.Patrol
   override def startExecuting():  Unit    = doll.getNavigator.tryMoveToXYZ(xPosition, yPosition, zPosition, speed)
 
   def makeUpdate(): Unit = mustUpdate = true

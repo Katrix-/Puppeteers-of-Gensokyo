@@ -35,7 +35,7 @@ class EntityDollAIFollowOwner(doll: EntityDoll, speed: Double, var minDist: Floa
       }
   }
 
-  override def continueExecuting: Boolean =
+  override def shouldContinueExecuting: Boolean =
     doll.dollMode == DollMode.Follow &&
       !pathFinder.noPath &&
       doll.getDistanceSqToEntity(owner) > (maxDist * maxDist)

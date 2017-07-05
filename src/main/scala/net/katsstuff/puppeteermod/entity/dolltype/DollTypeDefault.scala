@@ -36,11 +36,11 @@ trait DollTypeDefault extends DollType {
   override def textureArmorFolder: ResourceLocation = new ResourceLocation(LibMod.Id, "textures/dolls/armor")
 
   override def initializeAI(entityDoll: EntityDoll): Unit = {
-    entityDoll.addAI(0, new EntityDollAISwimming(entityDoll))
-    entityDoll.addAI(12, new EntityDollAIFollowOwner(entityDoll, speed, 2.5F, 10F))
-    entityDoll.addAI(13, new EntityDollAIWander(entityDoll, speed, 40))
-    entityDoll.addAI(14, new EntityDollAIWatchOwner(entityDoll, 8, 0.02F))
-    entityDoll.addAI(15, new EntityDollAIWatchClosest(entityDoll, classOf[EntityLivingBase], 8, 0.02F))
-    entityDoll.addAI(16, new EntityDollAILookIdle(entityDoll))
+    entityDoll.tasks.addTask(0, new EntityDollAISwimming(entityDoll))
+    entityDoll.tasks.addTask(12, new EntityDollAIFollowOwner(entityDoll, speed, 2.5F, 10F))
+    entityDoll.tasks.addTask(13, new EntityDollAIWander(entityDoll, speed, 40))
+    entityDoll.tasks.addTask(14, new EntityDollAIWatchOwner(entityDoll, 8, 0.02F))
+    entityDoll.tasks.addTask(15, new EntityDollAIWatchClosest(entityDoll, classOf[EntityLivingBase], 8, 0.02F))
+    entityDoll.tasks.addTask(16, new EntityDollAILookIdle(entityDoll))
   }
 }

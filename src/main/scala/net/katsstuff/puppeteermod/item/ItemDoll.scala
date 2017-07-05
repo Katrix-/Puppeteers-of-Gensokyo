@@ -4,13 +4,15 @@ import scala.collection.JavaConverters._
 
 import net.katsstuff.puppeteermod.PuppeteerMod
 import net.katsstuff.puppeteermod.entity.EntityDoll
-import net.katsstuff.puppeteermod.entity.dolltype.{DollRegistry, DollType}
+import net.katsstuff.puppeteermod.entity.dolltype.{DollRegistry, DollType, PuppeteerDolls}
+import net.katsstuff.puppeteermod.items.PuppeteerItems
 import net.katsstuff.puppeteermod.lib.LibItemName
 import net.minecraft.creativetab.CreativeTabs
 import net.minecraft.entity.player.EntityPlayer
 import net.minecraft.item.{Item, ItemStack}
+import net.minecraft.nbt.NBTTagCompound
 import net.minecraft.util.math.{BlockPos, Vec3d}
-import net.minecraft.util.{EnumActionResult, EnumFacing, EnumHand, NonNullList}
+import net.minecraft.util.{EnumActionResult, EnumFacing, EnumHand, NonNullList, ResourceLocation}
 import net.minecraft.world.World
 import net.minecraftforge.fml.relauncher.{Side, SideOnly}
 
@@ -20,10 +22,10 @@ class ItemDoll extends ItemModBase(LibItemName.Doll) {
 
   @SideOnly(Side.CLIENT)
   override def getSubItems(itemIn: Item, tab: CreativeTabs, list: NonNullList[ItemStack]): Unit =
-    list.addAll(DollRegistry.registry.getValues.asScala.map(d => new ItemStack(this, 1, DollRegistry.registry.getId(d))).asJava)
+    list.addAll(DollRegistry.registry.getValues.asScala.map(ItemDoll.createStack).asJava)
 
   override def getUnlocalizedName(stack: ItemStack): String =
-    super.getUnlocalizedName(stack) + "." + DollRegistry.registry.getObjectById(stack.getMetadata).getRegistryName.toString
+    super.getUnlocalizedName(stack) + "." + ItemDoll.dollType(stack).getOrElse(PuppeteerDolls.Bare).getRegistryName.toString
 
   override def onItemUse(
       player: EntityPlayer,
@@ -40,11 +42,22 @@ class ItemDoll extends ItemModBase(LibItemName.Doll) {
       if (!player.capabilities.isCreativeMode && !stack.isEmpty) {
         stack.shrink(1)
       }
-      val doll = new EntityDoll(world, new Vec3d(pos.up()), DollRegistry.registry.getObjectById(stack.getItemDamage), Some(player.getUniqueID))
+      val doll = new EntityDoll(world, new Vec3d(pos.up()), ItemDoll.dollType(stack).getOrElse(PuppeteerDolls.Bare), Some(player.getUniqueID))
       world.spawnEntity(doll)
     }
     EnumActionResult.SUCCESS
   }
+}
+object ItemDoll {
+  def createStack(doll: DollType): ItemStack = {
+    val s = new ItemStack(PuppeteerItems.Doll)
+    val nbt = Option(s.getTagCompound).getOrElse(new NBTTagCompound)
+    nbt.setString("dollType", doll.getRegistryName.toString)
+    s.setTagCompound(nbt)
+    s
+  }
 
-  def createStack(dollType: DollType): ItemStack = new ItemStack(this, 1, DollRegistry.registry.getId(dollType))
+  def dollType(stack: ItemStack): Option[DollType] =
+    Option(stack.getTagCompound)
+      .flatMap(nbt => Option(DollRegistry.registry.getValue(new ResourceLocation(nbt.getString("dollType")))))
 }
