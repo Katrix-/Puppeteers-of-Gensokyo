@@ -1,0 +1,9 @@
+doll.mode.standby=Standby Mode
+doll.mode.patrol=Patrol Mode
+doll.mode.follow=Follow Mode
+doll.mode.rideOn=RideOn Mode
+doll.nonOwner=You are not my owner
+
+entity.puppeteermod.doll.bare.name=Bare Doll
+
+item.doll.puppeteermod:bare.name=Bare doll

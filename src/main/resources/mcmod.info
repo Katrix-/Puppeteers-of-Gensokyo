@@ -1,0 +1,14 @@
+[
+{
+  "modid": "puppeteermod",
+  "name": "Puppeteers of Gensokyo",
+  "description": "This MOD is fanfiction of \"Shanghai Alice Gengakudan(Touhou Project)\".",
+  "version": "0.1",
+  "mcversion": "1.10.2",
+  "authors": ["Katrix"],
+  "credits": "iwa_yukinoshita",
+  "logoFile": "/assets/puppeteermod/textures/logo_s.png",
+  "screenshots": [],
+  "dependencies": []
+}
+]
