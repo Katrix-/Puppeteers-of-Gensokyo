@@ -36,9 +36,7 @@ object ClientProxy {
 
 class ClientProxy extends CommonProxy {
 
-  override def bakeDoll(dollType: DollType): Unit = {
-    ModelBakery.registerItemVariants(PuppeteerItems.Doll, ClientProxy.dollMRL(dollType))
-  }
+  override def bakeDoll(dollType: DollType): Unit = ModelBakery.registerItemVariants(PuppeteerItems.Doll, dollType.itemModel)
 
   override def registerRenderers(): Unit =
     registerEntityRenderer(new RendererDoll(_))

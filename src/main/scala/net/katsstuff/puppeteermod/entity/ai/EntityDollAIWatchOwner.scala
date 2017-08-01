@@ -27,12 +27,8 @@ class EntityDollAIWatchOwner(doll: EntityDoll, maxDistance: Float, chance: Float
     }
   }
 
-  override def shouldContinueExecuting: Boolean = {
-    if (!owner.isEntityAlive) false
-    else if (doll.getDistanceSqToEntity(owner) > (maxDistance * maxDistance)) false
-    else if (doll.dollMode == DollMode.RideOn) false
-    else lookTime > 0
-  }
+  override def shouldContinueExecuting: Boolean =
+    owner.isEntityAlive && doll.getDistanceSqToEntity(owner) <= (maxDistance * maxDistance) && doll.dollMode != DollMode.RideOn && lookTime > 0
 
   override def startExecuting(): Unit = lookTime = 40 + doll.getRNG.nextInt(40)
   override def resetTask():      Unit = owner = null

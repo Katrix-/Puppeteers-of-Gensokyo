@@ -1,7 +1,6 @@
 package net.katsstuff.puppeteermod.entity.ai
 
 import net.katsstuff.puppeteermod.entity.EntityDoll
-import net.katsstuff.puppeteermod.entity.EntityDoll
 
 //Copy from EntityAILookIdle
 class EntityDollAILookIdle(doll: EntityDoll) extends EntityDollAIBase(doll) {
@@ -11,7 +10,7 @@ class EntityDollAILookIdle(doll: EntityDoll) extends EntityDollAIBase(doll) {
   private var lookZ    = 0D
   private var idleTime = 0
 
-  override def shouldExecute:     Boolean = doll.getRNG.nextFloat < 0.02F
+  override def shouldExecute:           Boolean = doll.getRNG.nextFloat < 0.02F
   override def shouldContinueExecuting: Boolean = idleTime >= 0
 
   override def startExecuting(): Unit = {
@@ -21,9 +20,6 @@ class EntityDollAILookIdle(doll: EntityDoll) extends EntityDollAIBase(doll) {
     idleTime = 20 + doll.getRNG.nextInt(20)
   }
 
-  /**
-		* Updates the task
-		*/
   override def updateTask(): Unit = {
     idleTime -= 1
     doll.getLookHelper.setLookPosition(

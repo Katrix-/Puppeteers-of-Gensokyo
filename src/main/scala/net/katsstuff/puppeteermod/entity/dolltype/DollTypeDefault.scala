@@ -2,16 +2,10 @@ package net.katsstuff.puppeteermod.entity.dolltype
 
 import net.katsstuff.puppeteermod.client.ModelDollBase
 import net.katsstuff.puppeteermod.entity.EntityDoll
-import net.katsstuff.puppeteermod.entity.ai.{
-  EntityDollAIFollowOwner,
-  EntityDollAILookIdle,
-  EntityDollAISwimming,
-  EntityDollAIWander,
-  EntityDollAIWatchClosest,
-  EntityDollAIWatchOwner
-}
+import net.katsstuff.puppeteermod.entity.ai._
 import net.katsstuff.puppeteermod.lib.LibMod
 import net.minecraft.client.model.ModelBiped
+import net.minecraft.client.renderer.block.model.ModelResourceLocation
 import net.minecraft.entity.EntityLivingBase
 import net.minecraft.util.ResourceLocation
 import net.minecraftforge.fml.relauncher.{Side, SideOnly}
@@ -42,5 +36,10 @@ trait DollTypeDefault extends DollType {
     entityDoll.tasks.addTask(14, new EntityDollAIWatchOwner(entityDoll, 8, 0.02F))
     entityDoll.tasks.addTask(15, new EntityDollAIWatchClosest(entityDoll, classOf[EntityLivingBase], 8, 0.02F))
     entityDoll.tasks.addTask(16, new EntityDollAILookIdle(entityDoll))
+  }
+
+  override def itemModel: ModelResourceLocation = {
+    val name = getRegistryName
+    new ModelResourceLocation(new ResourceLocation(name.getResourceDomain, s"doll/${name.getResourcePath}"), "inventory")
   }
 }

@@ -37,5 +37,7 @@ class EntityDollAIWander(doll: EntityDoll, speed: Double, var executionChance: I
   override def shouldContinueExecuting: Boolean = !doll.getNavigator.noPath && doll.dollMode == DollMode.Patrol
   override def startExecuting():  Unit    = doll.getNavigator.tryMoveToXYZ(xPosition, yPosition, zPosition, speed)
 
+  override def resetTask(): Unit = mustUpdate = false
+
   def makeUpdate(): Unit = mustUpdate = true
 }

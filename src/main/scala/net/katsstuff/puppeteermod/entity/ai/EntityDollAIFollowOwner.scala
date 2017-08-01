@@ -18,7 +18,7 @@ class EntityDollAIFollowOwner(doll: EntityDoll, speed: Double, var minDist: Floa
   private var oldWaterPriority = 0F
 
   this.setMutexBits(3)
-  if (!doll.getNavigator.isInstanceOf[PathNavigateGround]) throw new IllegalArgumentException("Unsupported mob type for FollowOwnerGoal")
+  if (!doll.getNavigator.isInstanceOf[PathNavigateGround]) throw new IllegalArgumentException("Unsupported mob type for EntityDollAIFollowOwner")
 
   override def shouldExecute: Boolean = {
     if (doll.dollMode != DollMode.Follow) false
@@ -59,7 +59,7 @@ class EntityDollAIFollowOwner(doll: EntityDoll, speed: Double, var minDist: Floa
 
     if (timeToRecalcPath <= 0) {
       timeToRecalcPath = 10
-      if (!pathFinder.tryMoveToEntityLiving(owner, speed * 2) /*TMP Fix for moving slowly*/ ) {
+      if (!pathFinder.tryMoveToEntityLiving(owner, speed * 2) /*TODO Fix for moving slowly*/ ) {
         if (!doll.getLeashed && doll.getDistanceSqToEntity(owner) >= 144.0D) {
           val i = MathHelper.floor(owner.posX) - 2
           val j = MathHelper.floor(owner.posZ) - 2

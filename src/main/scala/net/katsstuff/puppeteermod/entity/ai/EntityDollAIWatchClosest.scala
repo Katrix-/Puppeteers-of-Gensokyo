@@ -22,18 +22,15 @@ class EntityDollAIWatchClosest(doll: EntityDoll, watchTarget: Class[_ <: Entity]
     else {
       if (doll.getAttackTarget != null) closestEntity = doll.getAttackTarget
 
-      if (watchTarget == classOf[EntityPlayer]) closestEntity = doll.world.getClosestPlayerToEntity(doll, maxDistance)
-      else
-        closestEntity = doll.world.findNearestEntityWithinAABB(watchTarget, doll.getEntityBoundingBox.expand(maxDistance, 3.0D, maxDistance), doll)
+      closestEntity = if (watchTarget == classOf[EntityPlayer]) doll.world.getClosestPlayerToEntity(doll, maxDistance)
+      else doll.world.findNearestEntityWithinAABB(watchTarget, doll.getEntityBoundingBox.expand(maxDistance, 3.0D, maxDistance), doll)
 
       closestEntity != null
     }
   }
 
   override def shouldContinueExecuting: Boolean =
-    if (!closestEntity.isEntityAlive) false
-    else if (doll.getDistanceSqToEntity(closestEntity) > (maxDistance * maxDistance)) false
-    else lookTime > 0
+    closestEntity.isEntityAlive && doll.getDistanceSqToEntity(closestEntity) <= (maxDistance * maxDistance) && lookTime > 0
 
   override def startExecuting(): Unit = lookTime = 40 + doll.getRNG.nextInt(40)
   override def resetTask():      Unit = closestEntity = null

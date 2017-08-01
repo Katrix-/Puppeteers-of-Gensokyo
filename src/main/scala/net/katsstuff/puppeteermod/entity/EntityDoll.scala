@@ -5,14 +5,15 @@ import java.util.UUID
 import scala.collection.JavaConverters._
 
 import io.netty.buffer.ByteBuf
+import net.katsstuff.danmakucore.entity.living.EntityDanmakuCreature
+import net.katsstuff.danmakucore.entity.living.ai.pathfinding.PathNavigateFlyer
 import net.katsstuff.puppeteermod.entity.DollMode.{Follow, Patrol, RideOn, StandBy}
-import net.katsstuff.puppeteermod.entity.ai.EntityDollAIBase
 import net.katsstuff.puppeteermod.entity.dolltype.{DollRegistry, DollType, PuppeteerDolls}
 import net.katsstuff.puppeteermod.helper.LogHelper
 import net.minecraft.client.resources.I18n
 import net.minecraft.entity.item.EntityItem
 import net.minecraft.entity.player.EntityPlayer
-import net.minecraft.entity.{Entity, EntityLiving, SharedMonsterAttributes}
+import net.minecraft.entity.{Entity, SharedMonsterAttributes}
 import net.minecraft.init.{Blocks, Items, SoundEvents}
 import net.minecraft.item.{Item, ItemStack}
 import net.minecraft.nbt.NBTTagCompound
@@ -20,14 +21,13 @@ import net.minecraft.util.math.Vec3d
 import net.minecraft.util.text.{ITextComponent, TextComponentString, TextComponentTranslation}
 import net.minecraft.util.{EnumFacing, EnumHand}
 import net.minecraft.world.World
-import net.minecraftforge.common.capabilities.{Capability, ICapabilityProvider}
+import net.minecraftforge.common.capabilities.Capability
 import net.minecraftforge.fml.common.registry.IEntityAdditionalSpawnData
-import net.minecraftforge.items.wrapper.CombinedInvWrapper
+import net.minecraftforge.items.wrapper.{CombinedInvWrapper, InvWrapper}
 import net.minecraftforge.items.{CapabilityItemHandler, IItemHandlerModifiable, ItemHandlerHelper, ItemStackHandler}
 
-class EntityDoll(_world: World, pos: Vec3d, private var _dollType: DollType, private var _owner: Option[UUID])
-    extends EntityLiving(_world)
-    with ICapabilityProvider
+class EntityDoll(_world: World, pos: Vec3d, private var _dollType: DollType, private var _owner: UUID)
+    extends EntityDanmakuCreature(_world)
     with IEntityAdditionalSpawnData {
 
   var dollMode: DollMode = DollMode.Follow
@@ -39,22 +39,23 @@ class EntityDoll(_world: World, pos: Vec3d, private var _dollType: DollType, pri
     inventory
   )
 
-  setSize(dollType.width, dollType.height)
-  setHeldItem(EnumHand.MAIN_HAND, dollType.heldItem)
-  setPosition(pos.x, pos.y, pos.z)
+  {
+    setSize(dollType.width, dollType.height)
+    setHeldItem(EnumHand.MAIN_HAND, dollType.heldItem)
+    setPosition(pos.x, pos.y, pos.z)
+  }
 
   def this(world: World) {
     this(world, Vec3d.ZERO, PuppeteerDolls.Bare, None)
   }
 
-  override def writeSpawnData(buf: ByteBuf): Unit =
-    buf.writeInt(DollRegistry.getId(_dollType))
+  override protected def createNavigator(world: World) = new PathNavigateFlyer(this, world)
 
-  override def readSpawnData(buf: ByteBuf): Unit =
-    _dollType = DollRegistry.dollFromId(buf.readInt()).getOrElse(PuppeteerDolls.Bare)
+  override def writeSpawnData(buf: ByteBuf): Unit = buf.writeInt(DollRegistry.getId(_dollType))
 
-  override def initEntityAI(): Unit =
-    dollType.initializeAI(this)
+  override def readSpawnData(buf: ByteBuf): Unit = _dollType = DollRegistry.dollFromId(buf.readInt()).getOrElse(PuppeteerDolls.Bare)
+
+  override def initEntityAI(): Unit = dollType.initializeAI(this)
 
   override def applyEntityAttributes(): Unit = {
     super.applyEntityAttributes()
@@ -65,6 +66,11 @@ class EntityDoll(_world: World, pos: Vec3d, private var _dollType: DollType, pri
   override def onLivingUpdate(): Unit = {
     super.onLivingUpdate()
     if (!world.isRemote) {
+      if (_owner == null) {
+        setDead()
+        return
+      }
+
       if (dollMode == RideOn) {
         val ridingEntity = getRidingEntity
         if (ridingEntity == null || !isOwner(ridingEntity)) {
@@ -72,12 +78,13 @@ class EntityDoll(_world: World, pos: Vec3d, private var _dollType: DollType, pri
           dollMode = StandBy
         } else heal(1F)
       }
+
       pickupItem()
     }
   }
 
-  def dollType: DollType     = _dollType
-  def owner:    Option[UUID] = _owner
+  def dollType:  DollType = _dollType
+  def ownerUuid: UUID     = _owner
 
   def toggleMode(): Unit = {
     dismountRidingEntity()
@@ -174,8 +181,8 @@ class EntityDoll(_world: World, pos: Vec3d, private var _dollType: DollType, pri
 
   def chatMessage(player: EntityPlayer, msg: ITextComponent): Unit = player.sendMessage(new TextComponentString(s"$getName: ").appendSibling(msg))
 
-  def ownerEntity:             Option[EntityPlayer] = owner.flatMap(uuid => Option(world.getPlayerEntityByUUID(uuid)))
-  def isOwner(entity: Entity): Boolean              = owner.contains(entity.getUniqueID)
+  def ownerEntity:             Option[EntityPlayer] = Option(world.getPlayerEntityByUUID(_owner))
+  def isOwner(entity: Entity): Boolean              = _owner == entity.getUniqueID
 
   override def getName: String =
     if (this.hasCustomName) getCustomNameTag
@@ -201,11 +208,15 @@ class EntityDoll(_world: World, pos: Vec3d, private var _dollType: DollType, pri
 
   override def readEntityFromNBT(compound: NBTTagCompound): Unit = {
     super.readEntityFromNBT(compound)
-    _owner = Option(compound.getUniqueId("Owner"))
+    _owner = compound.getUniqueId("Owner")
+
+    if (!world.isRemote && _owner == null) {
+      setDead()
+    }
   }
 
   override def writeEntityToNBT(compound: NBTTagCompound): Unit = {
     super.writeEntityToNBT(compound)
-    owner.foreach(compound.setUniqueId("Owner", _))
+    compound.setUniqueId("Owner", _owner)
   }
 }

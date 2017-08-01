@@ -12,11 +12,11 @@ class DollTypeBare extends DollTypeAutoRegister(LibDollName.Bare) with DollTypeD
 
   override def texture: ResourceLocation = new ResourceLocation(LibMod.Id, "textures/dolls/bare.png")
   override def recipe: IRecipe =
-    ShapedRecipeBuilder(ItemDoll.createStack(this))
-      .grid(" W ", "WHW", " W ")
+    ShapedRecipeBuilder
+      .withPattern(" W ", "WHW", " W ")
       .where('W').mapsTo(Blocks.WOOL)
       .where('H').mapsTo(PuppeteerItems.DollCore)
-      .createRecipe
+      .returns(ItemDoll.createStack(this))
 
   override def heldItem: ItemStack = ItemStack.EMPTY
 }

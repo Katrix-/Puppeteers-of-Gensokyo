@@ -2,6 +2,7 @@ package net.katsstuff.puppeteermod.entity.dolltype
 
 import net.katsstuff.puppeteermod.entity.EntityDoll
 import net.minecraft.client.model.ModelBiped
+import net.minecraft.client.renderer.block.model.ModelResourceLocation
 import net.minecraft.item.ItemStack
 import net.minecraft.item.crafting.IRecipe
 import net.minecraft.util.ResourceLocation
@@ -34,5 +35,7 @@ trait DollType extends IForgeRegistryEntry.Impl[DollType] {
   def recipe:                               IRecipe
 
   def heldItem: ItemStack
+
+  def itemModel: ModelResourceLocation
 
 }

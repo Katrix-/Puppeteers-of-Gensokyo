@@ -6,6 +6,7 @@ import net.katsstuff.puppeteermod.entity.dolltype.DollRegistry
 import net.katsstuff.puppeteermod.items.PuppeteerItems
 import net.katsstuff.puppeteermod.lib.{LibEntityName, LibMod, LibModJ}
 import net.minecraft.creativetab.CreativeTabs
+import net.minecraft.entity.Entity
 import net.minecraft.item.ItemStack
 import net.minecraft.util.ResourceLocation
 import net.minecraftforge.common.MinecraftForge
@@ -19,7 +20,7 @@ import net.minecraftforge.fml.relauncher.Side
 object PuppeteerMod {
   MinecraftForge.EVENT_BUS.register(CommonProxy)
   MinecraftForge.EVENT_BUS.register(DollRegistry)
-  if(FMLCommonHandler.instance().getSide == Side.CLIENT) {
+  if (FMLCommonHandler.instance().getSide == Side.CLIENT) {
     MinecraftForge.EVENT_BUS.register(ClientProxy)
   }
 
@@ -34,19 +35,28 @@ object PuppeteerMod {
 
   @EventHandler
   def preInit(event: FMLPreInitializationEvent): Unit = {
-    EntityRegistry.registerModEntity(
-      new ResourceLocation(LibMod.Id, LibEntityName.Doll),
-      classOf[EntityDoll],
-      LibEntityName.Doll,
-      0,
-      this,
-      64,
-      1,
-      false
-    )
-
+    registerEntity(LibEntityName.Doll, classOf[EntityDoll], 0)
     proxy.registerRenderers()
   }
+
+  def registerEntity(
+      name: String,
+      clazz: Class[_ <: Entity],
+      id: Int,
+      trackingRange: Int = 64,
+      updateFrequency: Int = 1,
+      sendVelocityUpdated: Boolean = true
+  ): Unit =
+    EntityRegistry.registerModEntity(
+      new ResourceLocation(LibMod.Id, name),
+      clazz,
+      name,
+      id,
+      this,
+      trackingRange,
+      updateFrequency,
+      sendVelocityUpdated
+    )
 
   @EventHandler
   def init(event: FMLPreInitializationEvent): Unit = ()

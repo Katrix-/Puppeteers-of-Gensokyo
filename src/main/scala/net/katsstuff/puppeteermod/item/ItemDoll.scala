@@ -33,24 +33,27 @@ class ItemDoll extends ItemModBase(LibItemName.Doll) {
       pos: BlockPos,
       hand: EnumHand,
       facing: EnumFacing,
-      noIdea: Float,
       hitX: Float,
-      hitY: Float
+      hitY: Float,
+      hitZ: Float
   ): EnumActionResult = {
     if (!world.isRemote) {
       val stack = player.getHeldItem(hand)
-      if (!player.capabilities.isCreativeMode && !stack.isEmpty) {
+
+      if (!player.capabilities.isCreativeMode) {
         stack.shrink(1)
       }
+
       val doll = new EntityDoll(world, new Vec3d(pos.up()), ItemDoll.dollType(stack).getOrElse(PuppeteerDolls.Bare), Some(player.getUniqueID))
       world.spawnEntity(doll)
     }
+
     EnumActionResult.SUCCESS
   }
 }
 object ItemDoll {
   def createStack(doll: DollType): ItemStack = {
-    val s = new ItemStack(PuppeteerItems.Doll)
+    val s   = new ItemStack(PuppeteerItems.Doll)
     val nbt = Option(s.getTagCompound).getOrElse(new NBTTagCompound)
     nbt.setString("dollType", doll.getRegistryName.toString)
     s.setTagCompound(nbt)

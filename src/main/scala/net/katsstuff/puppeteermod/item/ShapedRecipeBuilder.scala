@@ -1,62 +1,32 @@
 package net.katsstuff.puppeteermod.item
 
-import scala.collection.mutable.ArrayBuffer
-
 import net.minecraft.block.Block
 import net.minecraft.item.{Item, ItemStack}
-import net.minecraftforge.fml.common.registry.GameRegistry
 import net.minecraftforge.oredict.ShapedOreRecipe
 
-case class ShapedRecipeBuilder(
-    output: ItemStack,
-    mirrored: Boolean = false,
-    row1: Option[String] = None,
-    row2: Option[String] = None,
-    row3: Option[String] = None,
-    mappings: Map[Char, AnyRef] = Map()
-) {
+case class ShapedRecipeBuilder(rows: Seq[String] = Seq.empty, mappings: Map[Char, Object] = Map.empty, mirror: Boolean = false) {
 
-  def grid(row1: String):                             ShapedRecipeBuilder = copy(row1 = Some(row1))
-  def grid(row1: String, row2: String):               ShapedRecipeBuilder = copy(row1 = Some(row1), row2 = Some(row2))
-  def grid(row1: String, row2: String, row3: String): ShapedRecipeBuilder = copy(row1 = Some(row1), row2 = Some(row2), row3 = Some(row3))
+  def withPattern(row1: String): ShapedRecipeBuilder = copy(rows = Seq(row1))
+  def withPattern(row1: String, row2: String): ShapedRecipeBuilder = copy(rows = Seq(row1, row2))
+  def withPattern(row1: String, row2: String, row3: String): ShapedRecipeBuilder = copy(rows = Seq(row1, row2, row3))
 
-  def map(char: Char, stack: ItemStack): ShapedRecipeBuilder = copy(mappings = mappings + ((char, stack)))
-  def map(char: Char, item: Item):       ShapedRecipeBuilder = copy(mappings = mappings + ((char, new ItemStack(item))))
-  def map(char: Char, block: Block):     ShapedRecipeBuilder = copy(mappings = mappings + ((char, new ItemStack(block))))
-  def map(char: Char, oreName: String):  ShapedRecipeBuilder = copy(mappings = mappings + ((char, oreName)))
+  def where(char: Char): CharMapper = CharMapper(char, this)
 
-  def where(char: Char): RecipeMapping = RecipeMapping(char, this)
+  def isMirrored: ShapedRecipeBuilder = ShapedRecipeBuilder(mirror = true)
 
-  def createRecipe: ShapedOreRecipe = {
-    val rows = Seq(row1, row2, row3)
+  def returns(item: Item): ShapedOreRecipe = returns(new ItemStack(item))
+  def returns(block: Block): ShapedOreRecipe = returns(new ItemStack(block))
+  def returns(result: ItemStack): ShapedOreRecipe = {
+    val array = Array(Boolean.box(mirror)) ++ rows ++ mappings.flatMap(t => Seq(Char.box(t._1), t._2))
 
-    if (rows.forall(_.isEmpty)) throw new IllegalArgumentException("All rows in recipe builder are empty")
-    val usedRows = rows.flatten
-
-    val allowedChars = mappings.keySet + ' '
-
-    usedRows.foreach(row => {
-      if (row.exists(!allowedChars.contains(_)))
-        throw new IllegalArgumentException(s"The chars [${row.filter(!allowedChars.contains(_))}] are not mapped")
-    })
-
-    val usedMappings = mappings.flatMap { case (char, obj) => Seq(Char.box(char), obj) }.toSeq
-
-    //The ShapedOreRecipe constructor is very picky
-    val input: ArrayBuffer[AnyRef] = ArrayBuffer(Boolean.box(mirrored))
-    input ++= usedRows
-    input ++= usedMappings
-
-    new ShapedOreRecipe(output, input.toArray: _*)
+    new ShapedOreRecipe(result, array: _*)
   }
-
-  def build(): Unit = GameRegistry.addRecipe(createRecipe)
 }
+object ShapedRecipeBuilder extends ShapedRecipeBuilder()
 
-case class RecipeMapping(char: Char, builder: ShapedRecipeBuilder) {
-
-  def mapsTo(stack: ItemStack): ShapedRecipeBuilder = builder.map(char, stack)
-  def mapsTo(item: Item):       ShapedRecipeBuilder = builder.map(char, item)
-  def mapsTo(block: Block):     ShapedRecipeBuilder = builder.map(char, block)
-  def mapsTo(oreName: String):  ShapedRecipeBuilder = builder.map(char, oreName)
+case class CharMapper(char: Char, builder: ShapedRecipeBuilder) {
+  def mapsTo(ore: String): ShapedRecipeBuilder = builder.copy(mappings = builder.mappings + ((char, ore)))
+  def mapsTo(block: Block): ShapedRecipeBuilder = builder.copy(mappings = builder.mappings + ((char, block)))
+  def mapsTo(item: Item): ShapedRecipeBuilder = builder.copy(mappings = builder.mappings + ((char, item)))
+  def mapsTo(stack: ItemStack): ShapedRecipeBuilder = builder.copy(mappings = builder.mappings + ((char, stack)))
 }

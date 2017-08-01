@@ -1,6 +1,5 @@
 package net.katsstuff.puppeteermod.items;
 
-import net.katsstuff.puppeteermod.item.ItemDoll;
 import net.katsstuff.puppeteermod.lib.LibItemName;
 import net.katsstuff.puppeteermod.lib.LibModJ;
 import net.minecraft.item.Item;
