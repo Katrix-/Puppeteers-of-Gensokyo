@@ -1,4 +1,4 @@
-package net.katsstuff.puppeteermod.entity.dolltype;
+package net.katsstuff.puppeteermod.dolltype;
 
 import net.katsstuff.puppeteermod.lib.LibDollName;
 import net.katsstuff.puppeteermod.lib.LibModJ;

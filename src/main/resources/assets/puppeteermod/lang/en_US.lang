@@ -1,8 +1,11 @@
-doll.mode.standby=Standby Mode
-doll.mode.patrol=Patrol Mode
-doll.mode.follow=Follow Mode
-doll.mode.rideOn=RideOn Mode
+doll.mode.standby=Stand still
+doll.mode.wander=Wander around
+doll.mode.followCasual=Walk behind
+doll.mode.followBattle=Follow into battle
 doll.nonOwner=You are not my owner
+doll.notStringed=You need to attach a string to a doll before you can take control over it
+
+doll.control.alreadyControllingDoll=You are already controlling a doll
 
 entity.puppeteermod.doll.bare.name=Bare Doll
 

@@ -2,9 +2,11 @@ package net.katsstuff.puppeteermod
 
 import net.katsstuff.puppeteermod.client.ClientProxy
 import net.katsstuff.puppeteermod.entity.EntityDoll
-import net.katsstuff.puppeteermod.entity.dolltype.DollRegistry
+import net.katsstuff.puppeteermod.dolltype.DollRegistry
+import net.katsstuff.puppeteermod.helper.LogHelper
 import net.katsstuff.puppeteermod.items.PuppeteerItems
 import net.katsstuff.puppeteermod.lib.{LibEntityName, LibMod, LibModJ}
+import net.katsstuff.puppeteermod.network.PuppeteersPacketHandler
 import net.minecraft.creativetab.CreativeTabs
 import net.minecraft.entity.Entity
 import net.minecraft.item.ItemStack
@@ -36,7 +38,9 @@ object PuppeteerMod {
   @EventHandler
   def preInit(event: FMLPreInitializationEvent): Unit = {
     registerEntity(LibEntityName.Doll, classOf[EntityDoll], 0)
+    PuppeteersPacketHandler.load()
     proxy.registerRenderers()
+    proxy.preInit(event)
   }
 
   def registerEntity(

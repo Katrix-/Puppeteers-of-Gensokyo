@@ -1,9 +1,16 @@
 package net.katsstuff.puppeteermod
 
-import net.katsstuff.puppeteermod.entity.dolltype.{DollType, DollTypeBare}
+import scala.reflect.ClassTag
+
+import net.katsstuff.puppeteermod.dolltype.{DollType, DollTypeBare}
+import net.katsstuff.puppeteermod.handler.DollControlHandler
 import net.katsstuff.puppeteermod.item.{ItemDoll, ItemDollCore}
+import net.minecraft.entity.Entity
+import net.minecraft.entity.player.EntityPlayer
 import net.minecraft.item.Item
+import net.minecraftforge.common.MinecraftForge
 import net.minecraftforge.event.RegistryEvent
+import net.minecraftforge.fml.common.event.FMLPreInitializationEvent
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 
 object CommonProxy {
@@ -20,8 +27,13 @@ object CommonProxy {
 
 class CommonProxy {
 
+  lazy val dollControlHandler = new DollControlHandler
+
+  def preInit(event: FMLPreInitializationEvent): Unit = {
+    MinecraftForge.EVENT_BUS.register(dollControlHandler)
+  }
+
   def bakeDoll(dollType: DollType): Unit = ()
 
   def registerRenderers(): Unit = ()
-
 }

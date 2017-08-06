@@ -1,5 +1,6 @@
-package net.katsstuff.puppeteermod.entity.dolltype
+package net.katsstuff.puppeteermod.dolltype
 
+import net.katsstuff.puppeteermod.helper.LogHelper
 import net.katsstuff.puppeteermod.lib.LibMod
 import net.minecraft.util.ResourceLocation
 import net.minecraftforge.event.RegistryEvent

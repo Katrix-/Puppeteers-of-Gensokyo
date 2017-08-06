@@ -2,42 +2,30 @@ package net.katsstuff.puppeteermod.entity
 
 import java.util.UUID
 
-import scala.collection.JavaConverters._
+import com.google.common.base.Optional
 
-import io.netty.buffer.ByteBuf
+import net.katsstuff.danmakucore.data.Vector3
 import net.katsstuff.danmakucore.entity.living.EntityDanmakuCreature
-import net.katsstuff.danmakucore.entity.living.ai.pathfinding.PathNavigateFlyer
-import net.katsstuff.puppeteermod.entity.DollMode.{Follow, Patrol, RideOn, StandBy}
-import net.katsstuff.puppeteermod.entity.dolltype.{DollRegistry, DollType, PuppeteerDolls}
-import net.katsstuff.puppeteermod.helper.LogHelper
-import net.minecraft.client.resources.I18n
-import net.minecraft.entity.item.EntityItem
+import net.katsstuff.puppeteermod.PuppeteerMod
+import net.katsstuff.puppeteermod.dolltype.{DollType, PuppeteerDolls}
 import net.minecraft.entity.player.EntityPlayer
-import net.minecraft.entity.{Entity, SharedMonsterAttributes}
-import net.minecraft.init.{Blocks, Items, SoundEvents}
-import net.minecraft.item.{Item, ItemStack}
+import net.minecraft.entity.{Entity, EntityLivingBase, SharedMonsterAttributes}
+import net.minecraft.init.Items
+import net.minecraft.item.ItemStack
 import net.minecraft.nbt.NBTTagCompound
-import net.minecraft.util.math.Vec3d
+import net.minecraft.network.datasync.{DataParameter, DataSerializers, EntityDataManager}
+import net.minecraft.util.EnumHand
+import net.minecraft.util.math.MathHelper
+import net.minecraft.util.text.translation.I18n
 import net.minecraft.util.text.{ITextComponent, TextComponentString, TextComponentTranslation}
-import net.minecraft.util.{EnumFacing, EnumHand}
 import net.minecraft.world.World
-import net.minecraftforge.common.capabilities.Capability
-import net.minecraftforge.fml.common.registry.IEntityAdditionalSpawnData
-import net.minecraftforge.items.wrapper.{CombinedInvWrapper, InvWrapper}
-import net.minecraftforge.items.{CapabilityItemHandler, IItemHandlerModifiable, ItemHandlerHelper, ItemStackHandler}
 
-class EntityDoll(_world: World, pos: Vec3d, private var _dollType: DollType, private var _owner: UUID)
-    extends EntityDanmakuCreature(_world)
-    with IEntityAdditionalSpawnData {
+import net.katsstuff.puppeteermod.helper.JavaHelper._
 
-  var dollMode: DollMode = DollMode.Follow
-
-  private val inventory = new ItemStackHandler(dollType.inventorySize)
-  private val allInventories = new CombinedInvWrapper(
-    getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, EnumFacing.UP).asInstanceOf[IItemHandlerModifiable],
-    getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, EnumFacing.NORTH).asInstanceOf[IItemHandlerModifiable],
-    inventory
-  )
+object EntityDoll {
+  val StringedTo: DataParameter[Optional[UUID]] = EntityDataManager.createKey(classOf[EntityDoll], DataSerializers.OPTIONAL_UNIQUE_ID)
+}
+class EntityDoll(_world: World, pos: Vector3, private var _dollType: DollType, private var _owner: UUID) extends EntityDanmakuCreature(_world) {
 
   {
     setSize(dollType.width, dollType.height)
@@ -46,14 +34,8 @@ class EntityDoll(_world: World, pos: Vec3d, private var _dollType: DollType, pri
   }
 
   def this(world: World) {
-    this(world, Vec3d.ZERO, PuppeteerDolls.Bare, None)
+    this(world, Vector3.Zero, PuppeteerDolls.Bare, null)
   }
-
-  override protected def createNavigator(world: World) = new PathNavigateFlyer(this, world)
-
-  override def writeSpawnData(buf: ByteBuf): Unit = buf.writeInt(DollRegistry.getId(_dollType))
-
-  override def readSpawnData(buf: ByteBuf): Unit = _dollType = DollRegistry.dollFromId(buf.readInt()).getOrElse(PuppeteerDolls.Bare)
 
   override def initEntityAI(): Unit = dollType.initializeAI(this)
 
@@ -70,115 +52,102 @@ class EntityDoll(_world: World, pos: Vec3d, private var _dollType: DollType, pri
         setDead()
         return
       }
+    }
+  }
 
-      if (dollMode == RideOn) {
-        val ridingEntity = getRidingEntity
-        if (ridingEntity == null || !isOwner(ridingEntity)) {
-          dismountRidingEntity()
-          dollMode = StandBy
-        } else heal(1F)
+  override def getEyeHeight: Float = dollType.eyeHeight
+
+  override def getJumpUpwardsMotion: Float = 0.5F
+
+  override def getControllingPassenger: Entity = if (getPassengers.isEmpty) null else getPassengers.get(0)
+
+  override def canBeSteered: Boolean = true
+
+  override def canPassengerSteer: Boolean = getControllingPassenger match {
+    case player: EntityPlayer => player.isUser || PuppeteerMod.proxy.dollControlHandler.isControlling(player, this)
+    case _ => false
+  }
+
+  override def moveEntityWithHeading(strafe: Float, forward: Float): Unit = {
+    if (isBeingRidden && canBeSteered) {
+      val controller = this.getControllingPassenger.asInstanceOf[EntityLivingBase]
+      rotationYaw = controller.rotationYaw
+      prevRotationYaw = rotationYaw
+      rotationPitch = controller.rotationPitch
+      prevRotationPitch = rotationPitch
+      setRotation(rotationYaw, rotationPitch)
+      renderYawOffset = rotationYaw
+      rotationYawHead = renderYawOffset
+
+      val newStrafe = controller.moveStrafing
+      val newForward = controller.moveForward
+
+      if (canPassengerSteer) {
+        setAIMoveSpeed(getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).getAttributeValue.toFloat)
+        super.moveEntityWithHeading(newStrafe, newForward)
+      }
+      else if (controller.isInstanceOf[EntityPlayer]) {
+        motionX = 0.0D
+        motionY = 0.0D
+        motionZ = 0.0D
       }
 
-      pickupItem()
+      prevLimbSwingAmount = limbSwingAmount
+      val xDis = posX - prevPosX
+      val zDiz = posZ - prevPosZ
+      val dist = MathHelper.sqrt(xDis * xDis + zDiz * zDiz) * 4.0F
+      val clampedDist = if(dist > 1F) 1F else dist
+
+      limbSwingAmount += (clampedDist - limbSwingAmount) * 0.4F
+      limbSwing += limbSwingAmount
     }
+    else {
+      super.moveEntityWithHeading(strafe, forward)
+    }
+  }
+
+  override def entityInit(): Unit = {
+    super.entityInit()
+    dataManager.register(EntityDoll.StringedTo, Optional.absent[UUID])
+  }
+
+  def stringedTo: Option[UUID] = dataManager.get(EntityDoll.StringedTo).asScala
+  def stringedTo_=(uuid: Option[UUID]): Unit = dataManager.set(EntityDoll.StringedTo, uuid.asGuava)
+  def stringedToPlayer: Option[EntityPlayer] = stringedTo.flatMap(uuid => Option(world.getPlayerEntityByUUID(uuid)))
+
+  override def dropFewItems(wasRecentlyHit: Boolean, lootingModifier: Int): Unit = {
+    if(stringedTo.isDefined) entityDropItem(new ItemStack(Items.STRING), 0F)
+    entityDropItem(dollType.createStack(this), 0F)
   }
 
   def dollType:  DollType = _dollType
   def ownerUuid: UUID     = _owner
 
-  def toggleMode(): Unit = {
-    dismountRidingEntity()
-    playSound(SoundEvents.UI_BUTTON_CLICK, 0.3F, 0.6F)
-    dollMode match {
-      case Follow =>
-        chatMessage(new TextComponentTranslation("doll.mode.standby"))
-        dollMode = StandBy
-      case StandBy =>
-        chatMessage(new TextComponentTranslation("doll.mode.patrol"))
-        dollMode = Patrol
-      case RideOn =>
-        chatMessage(new TextComponentTranslation("doll.mode.patrol"))
-        dollMode = Patrol
-      case Patrol =>
-        chatMessage(new TextComponentTranslation("doll.mode.follow"))
-        dollMode = Follow
-    }
-  }
-
-  def setRideOnMode(player: EntityPlayer): Unit = {
-    if (!world.isRemote) {
-      playSound(SoundEvents.UI_BUTTON_CLICK, 0.3F, 0.6F)
-      chatMessage(new TextComponentTranslation("doll.mode.rideOn"))
-      dollMode = RideOn
-      startRiding(player, true) //FIXME: Won't appear to be actually riding player
-      LogHelper.info(getRidingEntity)
-    }
-  }
-
-  protected def pickupItem(): Unit = {
-    if (!world.isRemote && !dead) {
-      val list = world.getEntitiesWithinAABB(classOf[EntityItem], this.getEntityBoundingBox.expand(1.0D, 0.0D, 1.0D)).asScala
-
-      for (entityItem <- list if !entityItem.isDead) {
-        val itemstack = entityItem.getItem
-        addStackToInventory(itemstack) match {
-          case remaining if !remaining.isEmpty && !remaining.isItemEqual(itemstack) =>
-            entityItem.setItem(remaining)
-            playSound(SoundEvents.ENTITY_ITEM_PICKUP, 0.2F, ((rand.nextFloat - rand.nextFloat) * 0.7F + 1.0F) * 2.0F)
-          case none if none.isEmpty =>
-            playSound(SoundEvents.ENTITY_ITEM_PICKUP, 0.2F, ((rand.nextFloat - rand.nextFloat) * 0.7F + 1.0F) * 2.0F)
-            entityItem.setDead()
-          case _ =>
-        }
-      }
-    }
-  }
-
-  private def addStackToInventory(stack: ItemStack): ItemStack =
-    ItemHandlerHelper.insertItem(inventory, stack, false)
-
   override def processInteract(player: EntityPlayer, hand: EnumHand): Boolean = {
-    if (!world.isRemote) {
-      if (isOwner(player)) {
-        if (!player.isSneaking) {
-          if (dollMode == RideOn) {
-            dismountRidingEntity()
-            chatMessage(new TextComponentTranslation("doll.mode.follow"))
-            dollMode = Follow
-            true
-          } else {
-            setRideOnMode(player)
-            true
+    if(!world.isRemote) {
+      if(isOwner(player)) {
+        val stack = player.getHeldItem(hand)
+
+        if(stack.getItem == Items.STRING) {
+          if(stringedTo.isEmpty) {
+            stringedTo = Some(player.getUniqueID)
           }
-        } else {
-          val stack = player.getHeldItem(hand)
-          if (stack.isEmpty) {
-            toggleMode()
-            true
-          } else
-            stack.getItem match {
-              case Items.NAME_TAG =>
-                chatMessage(new TextComponentTranslation("doll.changeName").appendText(stack.getDisplayName))
-                setCustomNameTag(stack.getDisplayName)
-                true
-              case item if item == Item.getItemFromBlock(Blocks.CHEST) =>
-                ///TODO: Gui
-                //player.openGui(DollMod, GuiAliceDollInventory.GuiID, this.worldObj, this.getEntityId, 0, 0)
-                true
-              case _ =>
-                toggleMode()
-                true
-            }
+          else {
+            stringedTo = None
+          }
+          true
         }
-      } else {
-        chatMessage(player, new TextComponentTranslation("doll.nonOwner"))
+        else false
+      }
+      else {
+        player.sendMessage(new TextComponentTranslation("doll.nonOwner"))
         false
       }
-    } else true
+    }
+    else false
   }
 
-  def chatMessage(msg: ITextComponent): Unit = ownerEntity.foreach(chatMessage(_, msg))
-
+  def chatMessage(msg: ITextComponent):                       Unit = ownerEntity.foreach(chatMessage(_, msg))
   def chatMessage(player: EntityPlayer, msg: ITextComponent): Unit = player.sendMessage(new TextComponentString(s"$getName: ").appendSibling(msg))
 
   def ownerEntity:             Option[EntityPlayer] = Option(world.getPlayerEntityByUUID(_owner))
@@ -186,29 +155,12 @@ class EntityDoll(_world: World, pos: Vec3d, private var _dollType: DollType, pri
 
   override def getName: String =
     if (this.hasCustomName) getCustomNameTag
-    else I18n.format(s"entity.puppeteermod.doll.${dollType.name}.name")
-
-  override def getCapability[A](capability: Capability[A], facing: EnumFacing): A = {
-    val itemCapability = CapabilityItemHandler.ITEM_HANDLER_CAPABILITY
-    if (capability == itemCapability) {
-      if (facing == null) itemCapability.cast(allInventories)
-      else if (facing == EnumFacing.DOWN) itemCapability.cast(inventory)
-      else super.getCapability(capability, facing)
-    } else super.getCapability(capability, facing)
-  }
-
-  override def hasCapability(capability: Capability[_], facing: EnumFacing): Boolean = {
-    val itemCapability = CapabilityItemHandler.ITEM_HANDLER_CAPABILITY
-    if (capability == itemCapability) {
-      if (facing == null) true
-      else if (facing == EnumFacing.DOWN) true
-      else super.hasCapability(capability, facing)
-    } else super.hasCapability(capability, facing)
-  }
+    else I18n.translateToLocal(s"entity.puppeteermod.doll.${dollType.name}.name")
 
   override def readEntityFromNBT(compound: NBTTagCompound): Unit = {
     super.readEntityFromNBT(compound)
     _owner = compound.getUniqueId("Owner")
+    stringedTo = Option(compound.getUniqueId("StringedTo"))
 
     if (!world.isRemote && _owner == null) {
       setDead()
@@ -218,5 +170,6 @@ class EntityDoll(_world: World, pos: Vec3d, private var _dollType: DollType, pri
   override def writeEntityToNBT(compound: NBTTagCompound): Unit = {
     super.writeEntityToNBT(compound)
     compound.setUniqueId("Owner", _owner)
+    stringedTo.foreach(compound.setUniqueId("StringedTo", _))
   }
 }

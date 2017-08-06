@@ -2,9 +2,12 @@ package net.katsstuff.puppeteermod.item
 
 import scala.collection.JavaConverters._
 
+import net.katsstuff.danmakucore.data.Vector3
+import net.katsstuff.danmakucore.entity.living.TouhouSpecies
 import net.katsstuff.puppeteermod.PuppeteerMod
 import net.katsstuff.puppeteermod.entity.EntityDoll
-import net.katsstuff.puppeteermod.entity.dolltype.{DollRegistry, DollType, PuppeteerDolls}
+import net.katsstuff.puppeteermod.dolltype.{DollRegistry, DollType, PuppeteerDolls}
+import net.katsstuff.puppeteermod.helper.LogHelper
 import net.katsstuff.puppeteermod.items.PuppeteerItems
 import net.katsstuff.puppeteermod.lib.LibItemName
 import net.minecraft.creativetab.CreativeTabs
@@ -44,7 +47,8 @@ class ItemDoll extends ItemModBase(LibItemName.Doll) {
         stack.shrink(1)
       }
 
-      val doll = new EntityDoll(world, new Vec3d(pos.up()), ItemDoll.dollType(stack).getOrElse(PuppeteerDolls.Bare), Some(player.getUniqueID))
+      val up = pos.up()
+      val doll = new EntityDoll(world, new Vector3(up.getX, up.getY, up.getZ), ItemDoll.dollType(stack).getOrElse(PuppeteerDolls.Bare), player.getUniqueID)
       world.spawnEntity(doll)
     }
 

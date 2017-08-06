@@ -22,7 +22,7 @@ case class ShapedRecipeBuilder(rows: Seq[String] = Seq.empty, mappings: Map[Char
     new ShapedOreRecipe(result, array: _*)
   }
 }
-object ShapedRecipeBuilder extends ShapedRecipeBuilder()
+object ShapedRecipeBuilder extends ShapedRecipeBuilder(Seq.empty, Map.empty, false)
 
 case class CharMapper(char: Char, builder: ShapedRecipeBuilder) {
   def mapsTo(ore: String): ShapedRecipeBuilder = builder.copy(mappings = builder.mappings + ((char, ore)))

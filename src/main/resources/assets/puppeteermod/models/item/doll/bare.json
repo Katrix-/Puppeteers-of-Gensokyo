@@ -1,6 +1,6 @@
 {
   "parent": "item/generated",
   "textures": {
-	"layer0": "dollsmod:items/doll_bare"
+	"layer0": "puppeteermod:items/doll_bare"
   }
 }
