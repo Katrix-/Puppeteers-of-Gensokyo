@@ -24,7 +24,6 @@ trait ClientMessageHandler[A, Reply] extends MessageHandler[A, Reply] with HasCl
 }
 
 trait ServerMessageHandler[A, Reply] extends MessageHandler[A, Reply] with HasServerHandler[A] {
-  @SideOnly(Side.SERVER)
   def handle(netHandler: NetHandlerPlayServer, a: A): Option[Reply]
   override def handle(netHandler: INetHandler, a: A): Option[Reply] = handle(netHandler.asInstanceOf[NetHandlerPlayServer], a)
   override def side: Side = Side.SERVER

@@ -19,7 +19,6 @@ object DollSneaking {
   }
 
   implicit val handler: ServerMessageHandler[DollSneaking, Unit] = new ServerMessageHandler[DollSneaking, Unit] {
-    @SideOnly(Side.SERVER)
     override def handle(netHandler: NetHandlerPlayServer, a: DollSneaking): Option[Unit] = {
       scheduler.addScheduledTask(DollSneakingRunnable(netHandler, a))
       None

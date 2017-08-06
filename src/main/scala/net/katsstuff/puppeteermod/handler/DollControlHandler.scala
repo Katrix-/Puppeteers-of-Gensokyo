@@ -23,6 +23,7 @@ import net.minecraft.util.text.TextComponentTranslation
 import net.minecraftforge.event.entity.EntityMountEvent
 import net.minecraftforge.event.entity.living.LivingDeathEvent
 import net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent
+import net.minecraftforge.event.entity.player.{AttackEntityEvent, EntityItemPickupEvent, PlayerInteractEvent, PlayerPickupXpEvent}
 import net.minecraftforge.event.world.BlockEvent
 import net.minecraftforge.fml.common.FMLCommonHandler
 import net.minecraftforge.fml.common.eventhandler.{EventPriority, SubscribeEvent}
@@ -41,12 +42,12 @@ class DollControlHandler {
           doll.stringedToPlayer.foreach { stringedTo =>
             val length = 32D
             if(doll.getDistanceSqToEntity(stringedTo) >= length * length) {
-              val pos = new Vector3(doll).offset(Vector3.directionToEntity(doll, stringedTo), length / 2)
+              val pos = new Vector3(doll).offset(Vector3.directionToEntity(doll, stringedTo), length / 2D)
               val item = new EntityItem(world, pos.x, pos.y, pos.z, new ItemStack(Items.STRING))
               item.setDefaultPickupDelay()
               world.spawnEntity(item)
 
-              controlledDolls.find(_._2.doll == doll).foreach(_._1.dismountRidingEntity())
+              controlledDolls.filter(_._2.doll == doll).foreach(_._1.dismountRidingEntity())
               doll.stringedTo = None
             }
           }
@@ -98,6 +99,34 @@ class DollControlHandler {
           player.setDead()
         case _ =>
       }
+    }
+  }
+
+  @SubscribeEvent
+  def onInteract(event: PlayerInteractEvent): Unit = {
+    if(controlledDolls.contains(event.getEntityPlayer) && event.isCancelable) {
+      event.setCanceled(true)
+    }
+  }
+
+  @SubscribeEvent
+  def onPickup(event: EntityItemPickupEvent): Unit = {
+    if(controlledDolls.contains(event.getEntityPlayer)) {
+      event.setCanceled(true)
+    }
+  }
+
+  @SubscribeEvent
+  def onXpPickup(event: PlayerPickupXpEvent): Unit = {
+    if(controlledDolls.contains(event.getEntityPlayer)) {
+      event.setCanceled(true)
+    }
+  }
+
+  @SubscribeEvent
+  def onPickup(event: AttackEntityEvent): Unit = {
+    if(controlledDolls.contains(event.getEntityPlayer)) {
+      event.setCanceled(true)
     }
   }
 
@@ -165,8 +194,8 @@ class DollControlHandler {
       case ControlledData(doll, dummy) =>
         applyDataFromFake(player, dummy)
         controlledDolls.filter(_._2.dummy == dummy).foreach { t =>
-          val doll = t._2.doll
-          doll.stringedTo = Some(player.getUniqueID)
+          val otherDoll = t._2.doll
+          otherDoll.stringedTo = Some(player.getUniqueID)
         }
         doll.stringedTo = Some(player.getUniqueID)
     }

@@ -44,7 +44,6 @@ case class MountToDollRunnable(a: MountToDoll) extends Runnable {
 
         CommonReflectionStuff.setSize.invoke(player, Float.box(doll.width), Float.box(doll.height))
         player.eyeHeight = doll.getEyeHeight
-        player.setInvisible(true)
 
         PuppeteerMod.proxy.asInstanceOf[ClientProxy].clientControlHandler.addControlledDoll(player, doll)
       case _ => LogHelper.warn("Received non doll entity for doll mount packet")

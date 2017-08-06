@@ -39,7 +39,6 @@ case class DismountFromDollRunnable(a: DismountFromDoll) extends Runnable {
 
     CommonReflectionStuff.setSize.invoke(player, Float.box(0.6F), Float.box(1.8F))
     player.eyeHeight = player.getDefaultEyeHeight
-    player.setInvisible(false)
 
     PuppeteerMod.proxy.asInstanceOf[ClientProxy].clientControlHandler.removeControlledDoll(player)
   }

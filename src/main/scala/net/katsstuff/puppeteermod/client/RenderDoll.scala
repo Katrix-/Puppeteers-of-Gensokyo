@@ -2,6 +2,7 @@ package net.katsstuff.puppeteermod.client
 
 import org.lwjgl.opengl.GL11
 
+import net.katsstuff.puppeteermod.PuppeteerMod
 import net.katsstuff.puppeteermod.entity.EntityDoll
 import net.katsstuff.puppeteermod.dolltype.{DollType, PuppeteerDolls}
 import net.minecraft.client.Minecraft
@@ -18,7 +19,10 @@ class RenderDoll(renderManager: RenderManager) extends RenderBiped[EntityDoll](r
 
   override def doRender(entity: EntityDoll, x: Double, y: Double, z: Double, entityYaw: Float, partialTicks: Float): Unit = {
     setCurrentDoll(entity.dollType, entity)
-    super.doRender(entity, x, y, z, entityYaw, partialTicks)
+    val clientControlHandler = PuppeteerMod.proxy.asInstanceOf[ClientProxy].clientControlHandler
+    if(!clientControlHandler.isBeingControlled(Minecraft.getMinecraft.player, entity) || Minecraft.getMinecraft.gameSettings.thirdPersonView != 0) {
+      super.doRender(entity, x, y, z, entityYaw, partialTicks)
+    }
     entity.stringedToPlayer.foreach(renderString(entity, _, x, y, z, partialTicks))
   }
 

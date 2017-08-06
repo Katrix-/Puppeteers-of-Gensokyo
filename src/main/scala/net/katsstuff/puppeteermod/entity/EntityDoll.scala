@@ -19,8 +19,8 @@ import net.minecraft.util.math.MathHelper
 import net.minecraft.util.text.translation.I18n
 import net.minecraft.util.text.{ITextComponent, TextComponentString, TextComponentTranslation}
 import net.minecraft.world.World
-
 import net.katsstuff.puppeteermod.helper.JavaHelper._
+import net.katsstuff.puppeteermod.helper.LogHelper
 
 object EntityDoll {
   val StringedTo: DataParameter[Optional[UUID]] = EntityDataManager.createKey(classOf[EntityDoll], DataSerializers.OPTIONAL_UNIQUE_ID)
@@ -48,6 +48,7 @@ class EntityDoll(_world: World, pos: Vector3, private var _dollType: DollType, p
   override def onLivingUpdate(): Unit = {
     super.onLivingUpdate()
     if (!world.isRemote) {
+      dollType.onTick(this)
       if (_owner == null) {
         setDead()
         return
@@ -57,7 +58,9 @@ class EntityDoll(_world: World, pos: Vector3, private var _dollType: DollType, p
 
   override def getEyeHeight: Float = dollType.eyeHeight
 
-  override def getJumpUpwardsMotion: Float = 0.5F
+  override def getJumpUpwardsMotion: Float = if(getPassengers.isEmpty) 0.45F else 0.5F
+
+  override def getMountedYOffset: Double = getEyeHeight
 
   override def getControllingPassenger: Entity = if (getPassengers.isEmpty) null else getPassengers.get(0)
 
@@ -112,7 +115,13 @@ class EntityDoll(_world: World, pos: Vector3, private var _dollType: DollType, p
   }
 
   def stringedTo: Option[UUID] = dataManager.get(EntityDoll.StringedTo).asScala
-  def stringedTo_=(uuid: Option[UUID]): Unit = dataManager.set(EntityDoll.StringedTo, uuid.asGuava)
+  def stringedTo_=(uuid: Option[UUID]): Unit = {
+    dataManager.set(EntityDoll.StringedTo, uuid.asGuava)
+    uuid.fold(dollType.onUnstringed(this))(_ => dollType.onStringed(this))
+  }
+
+  override def isServerWorld: Boolean = if(!world.isRemote && dollType.needStringToMove(this)) stringedToPlayer.isDefined && super.isServerWorld else super.isServerWorld
+
   def stringedToPlayer: Option[EntityPlayer] = stringedTo.flatMap(uuid => Option(world.getPlayerEntityByUUID(uuid)))
 
   override def dropFewItems(wasRecentlyHit: Boolean, lootingModifier: Int): Unit = {
@@ -135,6 +144,11 @@ class EntityDoll(_world: World, pos: Vector3, private var _dollType: DollType, p
           else {
             stringedTo = None
           }
+
+          if(!player.capabilities.isCreativeMode) {
+            stack.shrink(1)
+          }
+
           true
         }
         else false

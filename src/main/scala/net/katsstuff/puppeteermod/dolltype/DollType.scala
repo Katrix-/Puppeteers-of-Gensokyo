@@ -37,4 +37,11 @@ abstract class DollType extends IForgeRegistryEntry.Impl[DollType] {
   @SideOnly(Side.CLIENT) def onUseItem(doll: EntityDoll, isPressed: Boolean): Unit
   @SideOnly(Side.CLIENT) def onPickBlock(doll: EntityDoll, isPressed: Boolean): Unit
 
+  def onStringed(doll: EntityDoll): Unit
+  def onUnstringed(doll: EntityDoll): Unit
+
+  def needStringToMove(doll: EntityDoll): Boolean
+
+  def onTick(doll: EntityDoll): Unit
+
 }

@@ -3,12 +3,9 @@ package net.katsstuff.puppeteermod.client.handler
 import scala.collection.mutable
 
 import net.katsstuff.puppeteermod.entity.EntityDoll
-import net.katsstuff.puppeteermod.handler.ControlledData
-import net.katsstuff.puppeteermod.helper.LogHelper
-import net.katsstuff.puppeteermod.network.{MountToDoll, PuppeteersPacketHandler}
-import net.katsstuff.puppeteermod.network.scalachannel.TargetPoint
 import net.minecraft.client.Minecraft
-import net.minecraft.entity.player.{EntityPlayer, EntityPlayerMP}
+import net.minecraft.entity.player.EntityPlayer
+import net.minecraftforge.client.event.RenderPlayerEvent
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 import net.minecraftforge.fml.common.gameevent.InputEvent.{KeyInputEvent, MouseInputEvent}
 import net.minecraftforge.fml.relauncher.{Side, SideOnly}
@@ -42,6 +39,13 @@ class ClientDollControlHandler {
     }
   }
 
+  @SubscribeEvent
+  def onRender(event: RenderPlayerEvent.Pre): Unit = {
+    if(controlledDolls.contains(event.getEntityPlayer)) {
+      event.setCanceled(true)
+    }
+  }
+
   def addControlledDoll(player: EntityPlayer, doll: EntityDoll): Unit = {
     controlledDolls.put(player, doll)
   }
@@ -49,4 +53,6 @@ class ClientDollControlHandler {
   def removeControlledDoll(player: EntityPlayer): Unit = {
     controlledDolls.remove(player)
   }
+
+  def isBeingControlled(player: EntityPlayer, doll: EntityDoll): Boolean = controlledDolls.get(player).contains(doll)
 }
